@@ -27,7 +27,7 @@ Servo servo;
 // Wifi configuration and credentials
 // In AP Mode
 #define WIFI_MODE WIFI_MODE_AP
-#define SSID "GalaxyRVR"
+#define SSID "GalaxyRVR" // name of wifi network, tk change
 #define PASSWORD "12345678"
 
 // Device configuration
