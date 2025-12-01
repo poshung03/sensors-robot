@@ -3,6 +3,10 @@
 #include <string.h>
 #include "SunFounder_AI_Camera.h"
 #include <Servo.h>
+#include "follow.cpp"
+#include "park.cpp"
+#include "avoid.cpp"
+
 
 // DEFINE MODES
 
@@ -154,6 +158,18 @@ void onReceive() {
       }
     }
   }
+
+// throttle
+  int throttle_L = aiCam.getThrottle(REGION_K);
+  int throttle_R = aiCam.getThrottle(REGION_Q);
+  // Serial.print("throttle_L: "); Serial.print(throttle_L);
+  // Serial.print("throttle_R: "); Serial.println(throttle_R);
+  if (throttle_L != 0 || throttle_R != 0 || throttle_L != leftMotorPower || throttle_R != rightMotorPower) {
+    currentMode = MODE_RC;
+    leftMotorPower = throttle_L;
+    rightMotorPower = throttle_R;
+  }
+
 }
 
 
@@ -169,15 +185,15 @@ void modeHandler() {
       servo.write(servoAngle);
       carSetMotors(leftMotorPower, rightMotorPower);
       break;
-//    case MODE_PARK:
-//      park();
-//     break;
- //   case MODE_FOLLOW:
-//      follow();
- //     break;
-//    case MODE_AVOID:
- //     avoid();
- //     break;
+    case MODE_PARK:
+      //park();
+      break;
+    case MODE_FOLLOW:
+      //follow();
+      break;
+    case MODE_AVOID:
+      //avoid();
+      break;
   }
 }
 
