@@ -1,7 +1,8 @@
 Just consider front car when doing the parking maneuver itself (probably works)
 1. Pull up even to front obstacle 
+detect obstacle, horizontal distance and alignment
 2. Move directly back
 3. Turn left throttle 45 degrees (move it down on controller)
-4. Move directly back*** very softly depending on space available but enough not to hit front obstacle; trial and error
+4. Move directly back*** very softly depending on space available but enough not to hit front obstacle; trial and error including distance from obstacle
 5. Turn right throttle 45 degrees (move it down on controller); so that turn right is same amount as turn left so its straight at the end
 6. Pull up forward (also trial and error)
