@@ -1,3 +1,5 @@
+// this is the buzzer code, but is not integrated with project main.
+// function directly in project main
 int buzzer = 8; // set the buzzer control digital IO pin
 
 void setup() {
