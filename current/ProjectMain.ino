@@ -40,6 +40,9 @@ Servo servo;
 #define SERVO_PIN 6
 #define SERVO_REVERSE false
 
+// Define ultrasonic buzzer pin
+#define BUZZER_PIN A0
+
 // Define the pin for the ultrasonic module
 #define ULTRASONIC_PIN 10
 
@@ -117,6 +120,7 @@ void setup() {
   aiCam.setOnReceived(onReceive);
   // Set the command timeout
   aiCam.setCommandTimeout(100);
+  pinMode(BUZZER_PIN, OUTPUT); // Set buzzer pin to output
 
   // Initialize SoftPWM
   SoftPWMBegin();
@@ -127,9 +131,9 @@ void loop() {
   modeHandler();
 }
 
-
-
-
+void SetBuzzer(mode) {
+  digitalWrite(BUZZER_PIN,mode);
+}
 
 
 
