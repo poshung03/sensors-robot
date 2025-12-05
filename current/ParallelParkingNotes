@@ -8,3 +8,6 @@ detect obstacle, horizontal distance and alignment
 5. Turn right throttle 45 degrees (move it down on controller); so that turn right is same amount as turn left so its straight at the end
      - All 3 right motors roll backwards while left motors do nothing
 6. Pull up forward (also trial and error)
+
+We're going to start right behind and to the side of the car that we'll be parking in front of, as if we're on a road about to park to the right 
+in parallel parking between two cars.
