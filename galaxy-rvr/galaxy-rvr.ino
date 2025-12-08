@@ -38,6 +38,7 @@
 #include "cmd_code_config.hpp"
 #include "SunFounder_AI_Camera.h"
 #include "battery.h"
+#include "buzzertone.h"
 /*************************** Configure *******************************/
 /** @name Configure 
  * 
