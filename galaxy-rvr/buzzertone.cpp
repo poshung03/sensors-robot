@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 #include "arduinoFFT.h"
-
+#include "NewTone.h"
 // -------------------- FFT config --------------------
 #define SAMPLES            128      // Must be a power of 2
 #define SAMPLING_FREQUENCY 5000.0   // Hz
@@ -81,5 +81,5 @@ float ListenFreq(uint8_t numAverages = 4) {
 
 void writefreq(uint8_t freqwrite){
   const uint8_t BUZZER_PIN = A0;   // digital pin for passive buzzer
-  tone(BUZZER_PIN, freqwrite);
+  NewTone(BUZZER_PIN, freqwrite);
 }

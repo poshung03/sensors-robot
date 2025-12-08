@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "arduinoFFT.h"
+#include "NewTone.h"
 
 /*
  *  [0]--|||--[1]

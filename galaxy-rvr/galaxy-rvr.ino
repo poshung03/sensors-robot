@@ -38,7 +38,7 @@
 #include "cmd_code_config.hpp"
 #include "SunFounder_AI_Camera.h"
 #include "battery.h"
-#include "buzzertone.h"
+//#include "buzzertone.h"
 /*************************** Configure *******************************/
 /** @name Configure 
  * 
@@ -67,8 +67,9 @@
 
 /** Configure Wifi mode, SSID, password*/
 #define WIFI_MODE WIFI_MODE_AP
-#define SSID "BetterBot"
+#define SSID "BestBot"
 #define PASSWORD "12345678"
+
 
 // #define WIFI_MODE WIFI_MODE_STA
 // #define SSID "xxxxxxxxxx"
