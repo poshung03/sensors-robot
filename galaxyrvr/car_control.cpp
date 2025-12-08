@@ -55,6 +55,9 @@ void carSetMotors(int8_t power0, int8_t power1) {
     #elif defined(ARDUINO_MINIMA)
     analogWrite(MOTOR_PINS[i*2], dir[i] * newPower[i]);
     analogWrite(MOTOR_PINS[i*2+1], !dir[i] * newPower[i]);
+    #else
+    analogWrite(MOTOR_PINS[i*2], dir[i] * newPower[i]);
+    analogWrite(MOTOR_PINS[i*2+1], !dir[i] * newPower[i]);
     #endif
   }
 }
