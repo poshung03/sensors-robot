@@ -38,6 +38,7 @@
 #include "cmd_code_config.hpp"
 #include "SunFounder_AI_Camera.h"
 #include "battery.h"
+#include "NewTone.h"
 //#include "buzzertone.h"
 /*************************** Configure *******************************/
 /** @name Configure 
@@ -126,6 +127,10 @@ uint32_t rgb_blink_interval = 500; // uint: ms
 uint32_t rgb_blink_start_time = 0;
 bool rgb_blink_flag = 0;
 
+// parking var
+bool searching = true;
+
+
 /* variable of esp32-cam flash lamp*/
 bool cam_lamp_status = false;
 //@}
@@ -142,7 +147,7 @@ void setup() {
   Serial.print("GalaxyRVR version "); Serial.println(VERSION);
 
   Serial.println(F("Initialzing..."));
-
+  NewTone(A0,2000,100);
   SoftPWMBegin(); // init softpwm, before the motors initialization and the rgb LEDs initialization
   rgbBegin();
   rgbWrite(ORANGE); // init hint
@@ -154,10 +159,12 @@ void setup() {
 
 #if !TEST
   aiCam.begin(SSID, PASSWORD, WIFI_MODE, PORT);
+  m = millis();
   aiCam.setOnReceived(onReceive);
+  m = millis();
 #endif
 
-  while (millis() - m < 500) {  // Wait for peripherals to be ready
+  while (millis() - m < 1000) {  // Wait for peripherals to be ready
     delay(1);
   }
 
@@ -168,7 +175,9 @@ void setup() {
 #endif
 
   Serial.println(F("Okie!"));
-  rgbWrite(GREEN);  // init finished
+  //Serial.print(F("voltage:"));Serial.println(batteryGetVoltage());
+  //rgbWrite(GREEN);  // init finished
+  pinMode(A2,INPUT);
 }
 
 /**
@@ -198,7 +207,7 @@ void loop() {
   modeHandler();
 #else
   /* Select the item to be tested, multiple selection allowed */
-  motors_test();
+  //motors_test();
   // rgb_test();
   // ultrasonic_test();
   // ir_obstacle_test();
@@ -359,7 +368,7 @@ void voice_control() {
 void onReceive() {
   // --------------------- send data ---------------------
   // battery voltage
-  // Serial.print(F("voltage:"));Serial.println(batteryGetVoltage());
+  Serial.print(F("voltage:"));Serial.println(batteryGetVoltage());
   aiCam.sendDoc["BV"] = batteryGetVoltage();
 
   // IR obstacle detection data
@@ -484,7 +493,7 @@ void park(){
 
   int rightValue = digitalRead(IR_RIGHT_PIN);
   int leftValue = digitalRead(IR_LEFT_PIN);
-
+  NewTone(A0,2000,800);
   carStop();
   delay(1000);
   if (rightValue == 1){
@@ -519,5 +528,51 @@ void park(){
   }
   }
 }
-
+void poshuPark(){
+  NewTone(A0,1250,200);
+  rgbWrite(BLUE); 
+  bool parking = false;
+  int path[20]={};
+  Serial.println("Parking!");
+  carStop();
+  if(searching){
+      carForward(20);
+  }
+  //Searching for spot script
+  while(searching){
+    Serial.println("Searching");
+    int sum = 0;
+    for(int i=19; i>0;i--){
+      path[i] = path[i-1];
+      sum += path[i];
+    }
+    path[0] = !digitalRead(A2);
+    Serial.println(path[0]);
+    sum += path[0];
+    Serial.println(sum);
+    if(sum == 0){
+      searching = false;
+      parking = true;
+      carStop();
+      NewTone(A0,1250,100);
+      delay(200);
+      NewTone(A0,1250,100);
+    }
+    delay(100);
+  }
+  // Parking script
+  if(parking){
+    NewTone(A0,2000,3000);
+    carBackward(20);
+    delay(200);
+    carTurnLeft(20);
+    delay(800);
+    carBackward(20);
+    delay(1200);
+    carTurnRight(30);
+    delay(740);
+    parking = false;
+    carStop();
+  }
+}
 
