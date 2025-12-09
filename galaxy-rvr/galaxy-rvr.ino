@@ -495,7 +495,7 @@ void park(){
   int leftValue = digitalRead(IR_LEFT_PIN);
   NewTone(A0,2000,800);
   carStop();
-  delay(1000);
+  delay(2000);
   if (rightValue == 1){
     timer = timer + 1;
   }
