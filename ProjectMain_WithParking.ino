@@ -301,7 +301,7 @@ void park(){
   int leftValue = digitalRead(IR_LEFT);
 
   carStop();
-  delay(1000);
+  delay(2000);
   if (rightValue == 1){
     timer = timer + 1;
   }
