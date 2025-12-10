@@ -39,6 +39,7 @@
 #include "SunFounder_AI_Camera.h"
 #include "battery.h"
 #include "NewTone.h"
+#include "buzzertone.h"
 //#include "buzzertone.h"
 /*************************** Configure *******************************/
 /** @name Configure 
@@ -147,7 +148,7 @@ void setup() {
   Serial.print("GalaxyRVR version "); Serial.println(VERSION);
 
   Serial.println(F("Initialzing..."));
-  NewTone(A0,2000,100);
+  //NewTone(A0,2000,100);
   SoftPWMBegin(); // init softpwm, before the motors initialization and the rgb LEDs initialization
   rgbBegin();
   rgbWrite(ORANGE); // init hint
@@ -275,7 +276,7 @@ void modeHandler() {
       voice_control();
       break;
     case MODE_PARK:
-      park();
+      poshuPark();
       break;
     default:
       break;
@@ -573,6 +574,8 @@ void poshuPark(){
     delay(740);
     parking = false;
     carStop();
+    delay(10000);
+    currentMode = MODE_NONE;
   }
 }
 

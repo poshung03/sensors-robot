@@ -5,8 +5,8 @@
 #include "arduinoFFT.h"
 #include "NewTone.h"
 // -------------------- FFT config --------------------
-#define SAMPLES            128      // Must be a power of 2
-#define SAMPLING_FREQUENCY 5000.0   // Hz
+#define SAMPLES            64      // Must be a power of 2
+#define SAMPLING_FREQUENCY 8000.0   // Hz
 
 
 
@@ -20,17 +20,12 @@ float ListenFreq(uint8_t numAverages = 4) {
 
   float vReal[SAMPLES];
   float vImag[SAMPLES];
-  float magAvg[SAMPLES];  // for averaging magnitudes across FFT frames
+  float peakSum = 0;  // for averaging magnitudes across FFT frames
 
   ArduinoFFT<float> FFT = ArduinoFFT<float>(vReal, vImag, SAMPLES, SAMPLING_FREQUENCY);
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(SOUND_SENSOR_PIN, INPUT);
   sampling_period_us = (unsigned long)(1000000.0 / SAMPLING_FREQUENCY);
-
-  // Clear accumulator
-  for (int i = 0; i < SAMPLES; i++) {
-    magAvg[i] = 0.0f;
-  }
 
   for (uint8_t n = 0; n < numAverages; n++) {
     // ---- Collect SAMPLES data points ----
@@ -64,19 +59,14 @@ float ListenFreq(uint8_t numAverages = 4) {
     FFT.complexToMagnitude(vReal, vImag, SAMPLES);
 
     // ---- Accumulate magnitudes ----
-    for (int i = 0; i < SAMPLES; i++) {
-      magAvg[i] += vReal[i];
-    }
+    peakSum += FFT.majorPeak(vReal,SAMPLES,SAMPLING_FREQUENCY);
   }
 
   // ---- Average magnitudes across frames ----
-  for (int i = 0; i < SAMPLES; i++) {
-    magAvg[i] /= (float)numAverages;
-  }
+  float peakAvg = peakSum/(float)numAverages;
 
   // ---- Find the peak frequency from averaged spectrum ----
-  float peak = FFT.majorPeak(magAvg, SAMPLES, SAMPLING_FREQUENCY);
-  return peak;
+  return peakAvg;
 }
 
 void writefreq(uint8_t freqwrite){
