@@ -40,6 +40,7 @@
 #include "battery.h"
 #include "NewTone.h"
 #include "buzzertone.h"
+#include "music.h"
 //#include "buzzertone.h"
 /*************************** Configure *******************************/
 /** @name Configure 
@@ -91,7 +92,7 @@
 
 /** Configure the motors speed in different modes */
 #define OBSTACLE_AVOID_POWER 80
-#define OBSTACLE_FOLLOW_POWER 80
+#define OBSTACLE_FOLLOW_POWER 100
 #define VOICE_CONTROL_POWER 80
 
 /** Configure the follow distance of obstacle follow */
@@ -118,6 +119,9 @@ int8_t current_voice_code = -1;
 int32_t voice_time = 0; // uint:s
 uint32_t voice_start_time = 0; // uint:s
 
+// parking var
+bool searching = true;
+
 /* variables of motors and servo*/
 int8_t leftMotorPower = 0;
 int8_t rightMotorPower = 0;
@@ -128,12 +132,12 @@ uint32_t rgb_blink_interval = 500; // uint: ms
 uint32_t rgb_blink_start_time = 0;
 bool rgb_blink_flag = 0;
 
-// parking var
-bool searching = true;
+
 
 
 /* variable of esp32-cam flash lamp*/
 bool cam_lamp_status = false;
+bool songplay = true;
 //@}
 
 /*********************** setup() & loop() ************************/
@@ -155,8 +159,8 @@ void setup() {
   carBegin();
   irObstacleBegin();
   batteryBegin();
-  servo.attach(SERVO_PIN);
-  servo.write(90);
+  //servo.attach(SERVO_PIN);
+  //servo.write(90);
 
 #if !TEST
   aiCam.begin(SSID, PASSWORD, WIFI_MODE, PORT);
@@ -189,7 +193,67 @@ void setup() {
  *  - modeHandler()
  * - or modules test
  */
+void Listen(){
+  bool sensing = true;
+  int count = 0;
+  unsigned long tstart = millis();
+  int samples = 0; 
+  float freqheard = 0;
+  while(sensing){
+    rgbWrite(BLUE);
+    freqheard = ListenFreq(5);
+    Serial.println(freqheard);
+    delay(100);
+    samples ++;
+    if(freqheard > 2000){
+      count ++;
+    }
+    if((millis()-tstart)>=10000){
+      sensing = false;
+    }
+  }
+  if((static_cast<float>(count)/static_cast<float>(samples))<0.3){
+    carTurnLeft(80);
+    delay(600);
+    carStop();  
+    currentMode = MODE_OBSTACLE_AVOIDANCE;
+  }
+  else{
+    currentMode = MODE_OBSTACLE_FOLLOWING;
+  }
+}
+
+void Friend(){
+  rgbWrite(BLUE);
+  delay(1000);
+  rgbWrite(GREEN);
+  NewTone(A0, 3000, 5000);
+  delay(5000);
+  rgbWrite(BLUE);
+  delay(4000);
+  carTurnRight(80);
+  delay(600); 
+  currentMode = MODE_OBSTACLE_AVOIDANCE;
+}
+
+void Foe(){
+  rgbWrite(BLUE);
+  delay(1000);
+  NewTone(A0, 3000,1000);
+  rgbWrite(GREEN);
+  delay(1000);
+  rgbWrite(BLUE);
+  delay(8000);
+  currentMode = MODE_OBSTACLE_FOLLOWING;
+}
+
 void loop() {
+  //Friend();
+if(aiCam.getSlider(REGION_B)>90&&songplay){
+    playsongB();
+    songplay = false;
+  }
+
 #if !TEST
   // because the value in a is constantly updated
   // Note that the cycle interval of the "aiCam.loop()" should be less than 80ms to avoid data d
@@ -241,8 +305,8 @@ void modeHandler() {
     case MODE_NONE:
       rgbWrite(MODE_NONE_COLOR);
       carStop();
-      servoAngle = 90;
-      servo.write(servoAngle);
+      //servoAngle = 90;
+      //servo.write(servoAngle);
       break;
     case MODE_DISCONNECT:
       if (millis() - rgb_blink_start_time > rgb_blink_interval) {
@@ -253,29 +317,44 @@ void modeHandler() {
       else rgbOff();
       carStop();
       servoAngle = 90;
-      servo.write(servoAngle);
+      //servo.write(servoAngle);
       break;
     case MODE_OBSTACLE_FOLLOWING:
       rgbWrite(MODE_OBSTACLE_FOLLOWING_COLOR);
-      servo.write(servoAngle);
+      //servo.write(servoAngle);
       obstacleFollowing();
       break;
     case MODE_OBSTACLE_AVOIDANCE:
       rgbWrite(MODE_OBSTACLE_AVOIDANCE_COLOR);
-      servo.write(servoAngle);
+      //servo.write(servoAngle);
       obstacleAvoidance();
       break;
     case MODE_APP_CONTROL:
       rgbWrite(MODE_APP_CONTROL_COLOR);
-      servo.write(servoAngle);
+      //servo.write(servoAngle);
       carSetMotors(leftMotorPower, rightMotorPower);
+      break;
+    case MODE_FOE:
+      rgbWrite(RED);
+      Serial.println("Foe Emit!");
+      Foe();
+      break;
+    case MODE_FRIEND:
+      rgbWrite(GREEN);
+      Serial.println("Friend Emit!");
+      Friend();
+      break;
+    case MODE_LISTEN:
+      rgbWrite(YELLOW);
+      Listen();
       break;
     case MODE_VOICE_CONTROL:
       rgbWrite(MODE_VOICE_CONTROL_COLOR);
-      servo.write(servoAngle);
+      //servo.write(servoAngle);
       voice_control();
       break;
     case MODE_PARK:
+      rgbWrite(GREEN);
       poshuPark();
       break;
     default:
@@ -295,8 +374,8 @@ void obstacleFollowing() {
   // usDistance = -1 while the distance is too far
   if (usDistance < 4 && usDistance > 0) {
     carStop();
-  } else if (usDistance < 10 && usDistance > 0) {
-    carForward(30);
+  } else if (usDistance < 7 && usDistance > 0) {
+    carForward(60);
   } else if (usDistance < FOLLOW_DISTANCE && usDistance > 0) {
     carForward(OBSTACLE_FOLLOW_POWER);
   } else {
@@ -382,14 +461,7 @@ void onReceive() {
   aiCam.sendDoc["O"] = usDistance;
 
   // --------------------- get data ---------------------
-  // Stop
-  if (aiCam.getButton(REGION_I)) {
-    currentMode = MODE_NONE;
-    current_voice_code = -1;
-    voice_time = 0;
-    carStop();
-    return;
-  }
+
 
   // Mode select: obstacle following, obstacle avoidance
   if (aiCam.getSwitch(REGION_E)) {
@@ -400,20 +472,34 @@ void onReceive() {
     if (currentMode != MODE_OBSTACLE_FOLLOWING) {
       currentMode = MODE_OBSTACLE_FOLLOWING;
     }
-  } else {
-    if (currentMode == MODE_OBSTACLE_FOLLOWING || currentMode == MODE_OBSTACLE_AVOIDANCE) {
+  } else if (aiCam.getSwitch(REGION_G)) {
+    if (currentMode != MODE_PARK) {
+      currentMode = MODE_PARK;
+      //int timer = 0;
+      //Serial.println("Switched to Park Mode");
+    }
+  } else if (aiCam.getSwitch(REGION_I)) {
+    if((currentMode != MODE_FRIEND) && (currentMode != MODE_OBSTACLE_AVOIDANCE)){
+      currentMode = MODE_FRIEND;
+    }
+  }else if (aiCam.getSwitch(REGION_J)) {
+    if((currentMode != MODE_FOE) && (currentMode != MODE_OBSTACLE_FOLLOWING)){
+      currentMode = MODE_FOE;
+    }
+  }else if (aiCam.getSwitch(REGION_C)) {
+    if((currentMode != MODE_LISTEN) && (currentMode != MODE_OBSTACLE_AVOIDANCE) && (currentMode != MODE_OBSTACLE_FOLLOWING)){
+      currentMode = MODE_LISTEN;
+    }
+  }
+  else if(aiCam.getSwitch(REGION_M)){
       currentMode = MODE_NONE;
+      searching = true;
+      songplay = true;
       carStop();
       return;
     }
-  }
-  if (aiCam.getSwitch(REGION_G)) {
-    if (currentMode != MODE_PARK) {
-      currentMode = MODE_PARK;
-      int timer = 0;
-      Serial.println("Switched to Park Mode");
-    }
-  }
+   
+
   // cam lamp
   if (aiCam.getSwitch(REGION_M) && !cam_lamp_status) {
     Serial.println("lamp on");
@@ -424,34 +510,6 @@ void onReceive() {
     aiCam.lamp_off();  // turn off cam lamp
     cam_lamp_status = false;
   }
-
-  // Speech control
-  if (currentMode != MODE_VOICE_CONTROL) {
-    current_voice_code = -1;
-    voice_time = 0;
-    voice_start_time = 0;
-    aiCam.sendDoc["J"] = 0;
-  }
-
-  int8_t code = -1;
-  voice_buf_temp[0] = 0;  // voice_buf_temp
-  aiCam.getSpeech(REGION_J, voice_buf_temp);
-  if (strlen(voice_buf_temp) > 0) {
-    aiCam.sendDoc["J"] = 1;
-    aiCam.sendData();
-    aiCam.sendDoc["J"] = 0;
-    code = text_2_cmd_code(voice_buf_temp);
-    if (code != -1) {
-      current_voice_code = code;
-      voice_time = voice_action_time[code];
-      voice_start_time = millis();
-    }
-  }
-
-  if (current_voice_code != -1) {
-    currentMode = MODE_VOICE_CONTROL;
-  }
-
   // servo angle
   int temp = aiCam.getSlider(REGION_D);
   if (servoAngle != temp) {
@@ -533,11 +591,14 @@ void poshuPark(){
   NewTone(A0,1250,200);
   rgbWrite(BLUE); 
   bool parking = false;
-  int path[20]={};
+  int path[20]={1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   Serial.println("Parking!");
   carStop();
   if(searching){
       carForward(20);
+  }else{
+    currentMode = MODE_NONE;
+    return;
   }
   //Searching for spot script
   while(searching){
@@ -574,7 +635,6 @@ void poshuPark(){
     delay(740);
     parking = false;
     carStop();
-    delay(10000);
     currentMode = MODE_NONE;
   }
 }

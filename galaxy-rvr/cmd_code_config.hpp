@@ -13,6 +13,9 @@
 #define MODE_VOICE_CONTROL           4
 #define MODE_DISCONNECT              5
 #define MODE_PARK                    6
+#define MODE_FRIEND                  7
+#define MODE_FOE                     8
+#define MODE_LISTEN                  9
 
 /** Set the color to match the mode */
 #define ERROR_COLOR RED
